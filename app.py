@@ -7,7 +7,7 @@ from streamlit_lottie import st_lottie
 
 # --- 1. PASTE YOUR DIRECT LINK HERE ---
 # (Keep the quotes "" around it!)
-AD_LINK = "PASTE_YOUR_LONG_MONETAG_LINK_HERE" 
+AD_LINK = "https://omg10.com/4/10607555" 
 
 # --- 2. APP CONFIGURATION ---
 st.set_page_config(page_title="Gap-Day Strategist", page_icon="⚡", layout="centered")
@@ -38,7 +38,7 @@ st.markdown("""
     }
     
     /* Input Fields */
-    .stTextInput > div > div > input, .stTextArea > div > div > textarea, .stNumberInput > div > div > input {
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea, .stSelectbox > div > div > div {
         background-color: #262730;
         color: white; 
         border: 1px solid #41444e;
@@ -71,12 +71,21 @@ with col2:
     st.title("⚡ Gap-Day Strategist")
     st.caption("AI-Powered Exam Planner for Students")
 
-# --- NEW INPUTS ---
-st.markdown("### 1️⃣ Exam Details")
+# --- NEW SECTION: Student Profile ---
+st.markdown("### 1️⃣ Student Profile")
+col_class, col_board = st.columns(2)
+with col_class:
+    student_class = st.selectbox("Select Your Class", ["Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "College"])
+with col_board:
+    student_board = st.selectbox("Select Your Board", ["CBSE", "ICSE", "State Board", "IB / IGCSE", "Other"])
+
+# --- SECTION: Exam Details ---
+st.markdown("### 2️⃣ Exam Details")
 uploaded_file = st.file_uploader("Upload Date Sheet (Image)", type=["jpg", "png", "jpeg"])
 syllabus_text = st.text_area("Syllabus / Chapter List", height=100, placeholder="Math: Ch 1-5, Physics: Ch 2...")
 
-st.markdown("### 2️⃣ Personalize It")
+# --- SECTION: Personalize ---
+st.markdown("### 3️⃣ Personalize It")
 col_hours, col_grasp = st.columns(2)
 with col_hours:
     study_hours = st.slider("Daily Study Hours?", 1, 16, 6)
@@ -88,7 +97,7 @@ weak_subjects = st.text_input("Which subjects are you WEAK in?", placeholder="e.
 st.markdown("---")
 
 # --- 4. THE MONEY MAKER ---
-st.subheader("3️⃣ Unlock Your Strategy")
+st.subheader("4️⃣ Unlock Your Strategy")
 st.info("View a quick ad to unlock the AI calculation.")
 
 # The Ad Button
@@ -108,10 +117,10 @@ if st.button("🚀 Generate My Plan"):
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 image = Image.open(uploaded_file)
                 prompt = f"""
-                Act as a strict exam coach. 
+                Act as a strict exam coach for a {student_class} ({student_board} Board) student. 
                 1. Analyze the Date Sheet image.
                 2. Student Syllabus: {syllabus_text}
-                3. Student Constraints:
+                3. Constraints:
                    - Can study {study_hours} hours per day.
                    - Exams start in {days_left} days.
                    - WEAK SUBJECTS (Focus more on these): {weak_subjects}
