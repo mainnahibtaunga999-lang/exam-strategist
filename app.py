@@ -7,7 +7,7 @@ from streamlit_lottie import st_lottie
 
 # --- 1. PASTE YOUR DIRECT LINK HERE ---
 # (Keep the quotes "" around it!)
-AD_LINK = "https://omg10.com/4/10607555" 
+AD_LINK = "PASTE_YOUR_LONG_MONETAG_LINK_HERE" 
 
 # --- 2. APP CONFIGURATION ---
 st.set_page_config(page_title="Gap-Day Strategist", page_icon="⚡", layout="centered")
@@ -38,7 +38,7 @@ st.markdown("""
     }
     
     /* Input Fields */
-    .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea, .stNumberInput > div > div > input {
         background-color: #262730;
         color: white; 
         border: 1px solid #41444e;
@@ -69,19 +69,30 @@ with col1:
     if lottie_ai: st_lottie(lottie_ai, height=130, key="ai_anim")
 with col2:
     st.title("⚡ Gap-Day Strategist")
-    st.caption("Upload your dates. Get a strategy. Ace the exam.")
+    st.caption("AI-Powered Exam Planner for Students")
 
-uploaded_file = st.file_uploader("1️⃣ Upload Date Sheet (Image)", type=["jpg", "png", "jpeg"])
-syllabus_text = st.text_area("2️⃣ Paste Syllabus / Chapter List", height=100, placeholder="Math: Ch 1-5, Physics: Ch 2...")
+# --- NEW INPUTS ---
+st.markdown("### 1️⃣ Exam Details")
+uploaded_file = st.file_uploader("Upload Date Sheet (Image)", type=["jpg", "png", "jpeg"])
+syllabus_text = st.text_area("Syllabus / Chapter List", height=100, placeholder="Math: Ch 1-5, Physics: Ch 2...")
+
+st.markdown("### 2️⃣ Personalize It")
+col_hours, col_grasp = st.columns(2)
+with col_hours:
+    study_hours = st.slider("Daily Study Hours?", 1, 16, 6)
+with col_grasp:
+    days_left = st.number_input("Days until exams start?", min_value=1, value=5)
+
+weak_subjects = st.text_input("Which subjects are you WEAK in?", placeholder="e.g. Math, Physics")
 
 st.markdown("---")
 
 # --- 4. THE MONEY MAKER ---
 st.subheader("3️⃣ Unlock Your Strategy")
-st.info("To keep this tool free, please view a quick ad to unlock the AI.")
+st.info("View a quick ad to unlock the AI calculation.")
 
 # The Ad Button
-st.markdown(f'<a href="{AD_LINK}" target="_blank" class="unlock-btn">🔓 Click to Unlock & Support</a>', unsafe_allow_html=True)
+st.markdown(f'<a href="{AD_LINK}" target="_blank" class="unlock-btn">🔓 Click to Unlock</a>', unsafe_allow_html=True)
 
 # The Verification Checkbox
 confirm = st.checkbox("✅ I have clicked the unlock button")
@@ -92,15 +103,25 @@ if st.button("🚀 Generate My Plan"):
     elif not uploaded_file or not syllabus_text:
         st.warning("Please upload your Date Sheet and Syllabus first.")
     else:
-        with st.spinner("🤖 analyzing gap days..."):
+        with st.spinner("🤖 Designing your perfect schedule..."):
             try:
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 image = Image.open(uploaded_file)
                 prompt = f"""
                 Act as a strict exam coach. 
-                Analyze the dates in the image and this syllabus: {syllabus_text}.
-                Create a Gap-Day schedule. 
-                Prioritize hard topics.
+                1. Analyze the Date Sheet image.
+                2. Student Syllabus: {syllabus_text}
+                3. Student Constraints:
+                   - Can study {study_hours} hours per day.
+                   - Exams start in {days_left} days.
+                   - WEAK SUBJECTS (Focus more on these): {weak_subjects}
+                
+                4. Create a Gap-Day schedule.
+                5. Rules:
+                   - Allocate MORE hours to the 'Weak Subjects' mentioned.
+                   - Break the {study_hours} hours into realistic sessions (e.g., 2 hours study, 15 min break).
+                   - Be specific: Don't just say "Study Math", say "Math: Chapter 1 & 2".
+                
                 Format using Markdown with bold headers.
                 """
                 response = model.generate_content([prompt, image])
