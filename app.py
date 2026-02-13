@@ -114,7 +114,7 @@ if st.button("🚀 Generate My Plan"):
     else:
         with st.spinner("🤖 Designing your perfect schedule..."):
             try:
-                model = genai.GenerativeModel('gemini-3-flash')
+                model = genai.GenerativeModel('gemini-3-flash-001')
                 image = Image.open(uploaded_file)
                 prompt = f"""
                 Act as a strict exam coach for a {student_class} ({student_board} Board) student. 
