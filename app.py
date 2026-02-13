@@ -1,42 +1,45 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
+import os
 
-# 1. App Title and Description
+# 1. App Configuration
 st.set_page_config(page_title="Exam Gap Strategist", page_icon="📅")
 st.title("📅 The Gap-Day Strategist")
 st.write("Upload your Exam Date Sheet, and I'll build the perfect study plan for your gap days.")
 
-# 2. Sidebar for API Key
-with st.sidebar:
-    st.header("Settings")
-    api_key = st.text_input("Enter your Google Gemini API Key", type="password")
-    st.markdown("[Get your free key here](https://aistudio.google.com/app/apikey)")
+# 2. Get the API Key safely
+try:
+    # Try getting it from Secrets (for the website)
+    api_key = st.secrets["GEMINI_API_KEY"]
+except:
+    # Fallback for local testing (optional)
+    api_key = os.getenv("GEMINI_API_KEY")
 
-# 3. Main Inputs
+if not api_key:
+    st.error("⚠️ API Key not found! Please set GEMINI_API_KEY in Streamlit Secrets.")
+    st.stop()
+
+genai.configure(api_key=api_key)
+
+# 3. Main Inputs (Simple & Clean)
 uploaded_file = st.file_uploader("📸 Upload a photo of your Date Sheet", type=["jpg", "png", "jpeg"])
 syllabus_text = st.text_area("📝 Paste your Syllabus (or Chapter list)", height=150, placeholder="Example: Math: Ch 1-10, Science: Ch 5-8...")
 
 # 4. The "Magic" Button
 if st.button("🚀 Generate My Strategy"):
-    if not api_key:
-        st.error("Please enter your API Key in the sidebar first!")
-    elif not uploaded_file:
+    if not uploaded_file:
         st.error("Please upload your Date Sheet image.")
     elif not syllabus_text:
         st.error("Please enter your syllabus.")
     else:
-        # Show a loading spinner while AI thinks
-        with st.spinner("Analyzing your exam dates..."):
+        with st.spinner("Analyzing your exam dates... (This takes about 10 seconds)"):
             try:
-                # Configure the AI
-                genai.configure(api_key=api_key)
+                # Use the Flash model
                 model = genai.GenerativeModel('gemini-1.5-flash')
-
-                # Load the image
                 image = Image.open(uploaded_file)
 
-                # The Prompt (Instructions for the AI)
+                # The Prompt
                 prompt = f"""
                 You are an expert exam strategist for a student. 
                 1. Look at the uploaded image of the Date Sheet. Identify the dates and subjects.
@@ -52,9 +55,7 @@ if st.button("🚀 Generate My Strategy"):
 
                 # Get the response
                 response = model.generate_content([prompt, image])
-                
-                # Display the result
-                st.success("Plan Generated!")
+                st.success("Plan Generated! Scroll down 👇")
                 st.markdown(response.text)
 
             except Exception as e:
