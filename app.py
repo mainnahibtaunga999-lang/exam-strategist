@@ -83,9 +83,6 @@ st.info("To keep this tool free, please view a quick ad to unlock the AI.")
 # The Ad Button
 st.markdown(f'<a href="{AD_LINK}" target="_blank" class="unlock-btn">🔓 Click to Unlock & Support</a>', unsafe_allow_html=True)
 
-# The Verification Checkbox
-confirm = st.checkbox("✅ I have clicked the unlock button")
-
 if st.button("🚀 Generate My Plan"):
     if not confirm:
         st.error("Please click the Unlock button first to support the server!")
