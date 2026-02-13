@@ -1,16 +1,20 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
-import os
 import requests
 from streamlit_lottie import st_lottie
+import streamlit.components.v1 as components
 
 # --- 1. CONFIGURATION ---
 AD_LINK = "https://omg10.com/4/10607555" 
 
 st.set_page_config(page_title="Gap-Day Strategist", page_icon="⚡", layout="centered")
 
-# Custom CSS
+# Initialize "Unlocked" state
+if 'unlocked' not in st.session_state:
+    st.session_state.unlocked = False
+
+# Custom CSS for Premium Look
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; color: white; }
@@ -22,15 +26,17 @@ st.markdown("""
         text-align: center;
         font-weight: bold;
         font-size: 20px;
-        text-decoration: none;
         display: block;
         margin: 20px 0;
+        cursor: pointer;
+        border: none;
+        width: 100%;
         box-shadow: 0 4px 15px rgba(0, 200, 81, 0.4);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Animation
+# Animation Helper
 def load_lottieurl(url):
     r = requests.get(url)
     return r.json() if r.status_code == 200 else None
@@ -42,64 +48,74 @@ try:
     api_key = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=api_key)
 except:
-    st.error("⚠️ API Key missing in Streamlit Secrets!")
+    st.error("⚠️ API Key missing in Secrets!")
     st.stop()
 
-# --- 2. UI ---
+# --- 2. THE UI ---
 col1, col2 = st.columns([1, 2])
 with col1:
     if lottie_ai: st_lottie(lottie_ai, height=130)
 with col2:
     st.title("⚡ Gap-Day Strategist")
-    st.caption("AI Exam Planning for Students")
+    st.caption("AI-Powered Exam Planning for Students")
 
-# Inputs
-st.markdown("### 1️⃣ Student Profile")
-c1, c2 = st.columns(2)
-student_class = c1.selectbox("Class", ["Class 8", "Class 9", "Class 10", "Class 11", "Class 12"])
-student_board = c2.selectbox("Board", ["CBSE", "ICSE", "State Board", "Other"])
+# --- STEP 1: THE LOCK ---
+if not st.session_state.unlocked:
+    st.subheader("🔓 Unlock the AI")
+    st.info("To keep this tool free, click the button below to view a quick ad and unlock the generator.")
+    
+    if st.button("🔓 CLICK TO UNLOCK", key="main_unlock_btn"):
+        # This is the magic part:
+        # 1. It flips the switch in the background
+        st.session_state.unlocked = True
+        # 2. It uses Javascript to open your Monetag link in a new tab
+        js_code = f'window.open("{AD_LINK}", "_blank");'
+        components.html(f'<script>{js_code}</script>', height=0)
+        st.rerun() # Refresh to show the app
 
-st.markdown("### 2️⃣ Details")
-uploaded_file = st.file_uploader("Upload Date Sheet", type=["jpg", "png", "jpeg"])
-syllabus_text = st.text_area("Syllabus", placeholder="Ch 1-5, etc.")
+# --- STEP 2: THE APP (Only shows after unlock) ---
+else:
+    st.success("✅ App Unlocked! You can now generate your plan.")
+    
+    st.markdown("### 1️⃣ Student Profile")
+    c1, c2 = st.columns(2)
+    student_class = c1.selectbox("Select Class", ["Class 8", "Class 9", "Class 10", "Class 11", "Class 12"])
+    student_board = c2.selectbox("Select Board", ["CBSE", "ICSE", "State Board", "Other"])
 
-st.markdown("### 3️⃣ Personalize")
-study_hours = st.slider("Daily Hours?", 1, 16, 6)
-weak_subjects = st.text_input("Weak Subjects?", placeholder="Math, Science...")
+    st.markdown("### 2️⃣ Exam Details")
+    uploaded_file = st.file_uploader("Upload Date Sheet (Image)", type=["jpg", "png", "jpeg"])
+    syllabus_text = st.text_area("Syllabus / Chapter List", placeholder="Math: Ch 1-5, Physics: Ch 2...")
 
-st.markdown("---")
-st.subheader("4️⃣ Unlock Strategy")
-st.markdown(f'<a href="{AD_LINK}" target="_blank" class="unlock-btn">🔓 Click to Unlock</a>', unsafe_allow_html=True)
-confirm = st.checkbox("✅ I have clicked the unlock button")
+    st.markdown("### 3️⃣ Personalize")
+    study_hours = st.slider("Daily Study Hours?", 1, 16, 6)
+    weak_subjects = st.text_input("Weak Subjects?", placeholder="e.g. Math, Physics")
 
-if st.button("🚀 Generate My Plan"):
-    if not confirm:
-        st.error("Please click the Unlock button first!")
-    elif not uploaded_file:
-        st.warning("Please upload your Date Sheet.")
-    else:
-        with st.spinner("🤖 Trying active models..."):
-            # This list ensures a 100% success rate by trying every possible model ID for 2026
-            models_to_try = [
-                'gemini-3-flash-001',   # Newest 2026 Stable
-                'gemini-3-flash',       # 2026 Standard
-                'gemini-1.5-flash',     # Classic Universal Alias
-                'gemini-pro'            # Emergency Backup
-            ]
-            
-            success = False
-            for model_name in models_to_try:
-                try:
-                    model = genai.GenerativeModel(model_name)
-                    image = Image.open(uploaded_file)
-                    prompt = f"Coach a {student_class} {student_board} student. Hours: {study_hours}. Weak: {weak_subjects}. Create a schedule from this image and syllabus: {syllabus_text}"
-                    response = model.generate_content([prompt, image])
-                    st.success(f"Success! (Model: {model_name})")
-                    st.markdown(response.text)
-                    success = True
-                    break 
-                except Exception:
-                    continue # Try the next model if this one fails
-            
-            if not success:
-                st.error("Google is currently updating their servers. Please try again in 5 minutes.")
+    if st.button("🚀 Generate My Plan"):
+        if not uploaded_file or not syllabus_text:
+            st.warning("Please upload your Date Sheet and Syllabus first.")
+        else:
+            with st.spinner("🤖 Trying active AI models..."):
+                # Self-Healing Model List for 2026
+                models_to_try = [
+                    'gemini-3-flash-001', 
+                    'gemini-3-flash', 
+                    'gemini-1.5-flash', 
+                    'gemini-pro'
+                ]
+                
+                success = False
+                for m_name in models_to_try:
+                    try:
+                        model = genai.GenerativeModel(m_name)
+                        image = Image.open(uploaded_file)
+                        prompt = f"Coach a {student_class} {student_board} student. {study_hours} hrs/day. Weak: {weak_subjects}. Plan using image & syllabus: {syllabus_text}"
+                        response = model.generate_content([prompt, image])
+                        st.balloons()
+                        st.markdown(response.text)
+                        success = True
+                        break 
+                    except:
+                        continue
+                
+                if not success:
+                    st.error("Server busy. Please try again in 2 minutes.")
